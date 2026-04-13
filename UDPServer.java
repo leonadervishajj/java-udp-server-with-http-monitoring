@@ -1,40 +1,51 @@
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
+import java.net.*;
+import java.io.*;
 
 public class UDPServer {
-    private static final String SERVER_IP = "127.0.0.1";
-    private static final int PORT = 5000;
-    private static final int BUFFER_SIZE = 1024;
+    private static final int PORT = 1234; // Porta ku dëgjon serveri
 
     public static void main(String[] args) {
-        try {
-       
-            DatagramSocket socket = new DatagramSocket(PORT);
-            InetAddress ip = InetAddress.getByName(SERVER_IP);
-            
-            System.out.println("Serveri UDP startoi ne " + SERVER_IP + ":" + PORT);
+        try (DatagramSocket socket = new DatagramSocket(PORT)) {
+            System.out.println("UDP Serveri u nis në portën " + PORT + "...");
+            System.out.println("Duke pritur për mesazhe...");
 
-            byte[] receiveData = new byte[BUFFER_SIZE];
+            byte[] receiveBuffer = new byte[1024];
 
             while (true) {
-        
-                DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+                // 1. Pritja e paketës nga klienti (Pika 1)
+                DatagramPacket receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
                 socket.receive(receivePacket);
 
+                String message = new String(receivePacket.getData(), 0, receivePacket.getLength()).trim();
                 String clientAddress = receivePacket.getAddress().getHostAddress() + ":" + receivePacket.getPort();
-                
-                // pergaditja e logjikes per shtimin e file-t te 2
-                if (ClientManager.registerClient(clientAddress)) {
-                    System.out.println("Lidhje e re e pranuar: " + clientAddress);
-                } else {
-                    System.out.println("Lidhja u refuzua per: " + clientAddress + " (Limiti u arrit)");
-                }
 
-                receiveData = new byte[BUFFER_SIZE];
+               
+                if (ClientManager.registerClient(clientAddress)) {
+                    System.out.println(" Mesazhi i pranuar nga [" + clientAddress + "]: " + message);
+
+                 
+                    String ackMessage = "ACK: Mesazhi u pranua me sukses!";
+                    byte[] sendData = ackMessage.getBytes();
+
+                   
+                    DatagramPacket sendPacket = new DatagramPacket(
+                        sendData, 
+                        sendData.length, 
+                        receivePacket.getAddress(), 
+                        receivePacket.getPort()
+                    );
+
+                    socket.send(sendPacket);
+                    System.out.println("📤 ACK u dërgua te klienti.");
+
+                
+                } else {
+                  
+                    System.out.println("Lidhja u refuzua për: " + clientAddress);
+                }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Gabim në Server: " + e.getMessage());
         }
     }
 }
