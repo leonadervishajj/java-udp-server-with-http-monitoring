@@ -24,6 +24,7 @@ public class UDPServer {
 
                 String clientAddress = receivePacket.getAddress().getHostAddress() + ":" + receivePacket.getPort();
                 
+                // pergaditja e logjikes per shtimin e file-t te 2
                 if (ClientManager.registerClient(clientAddress)) {
                     System.out.println("Lidhje e re e pranuar: " + clientAddress);
                 } else {
