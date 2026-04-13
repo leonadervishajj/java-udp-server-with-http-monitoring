@@ -1,3 +1,0 @@
-public r ClientManager {
-    
-}
