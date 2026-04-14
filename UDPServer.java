@@ -5,7 +5,6 @@ public class UDPServer {
     private static final int PORT = 1234;
 
     public static void main(String[] args) {
-        // Kjo lejon monitorimin në browser (http://localhost:8080/stats)
         new Thread(new HttpServer()).start();
 
         try (DatagramSocket socket = new DatagramSocket(PORT)) {
