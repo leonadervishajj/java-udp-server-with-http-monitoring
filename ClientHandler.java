@@ -1,22 +1,23 @@
- import java.util.Date;
+import java.io.File;
+import java.util.Arrays;
 
 public class ClientHandler {
 
-    public static String handleRequest(String message, String clientAddress) {
+    public static String handleRequest(String message) {
+        String request = message.trim().toUpperCase();
+        if (request.equals("LISTA")) {
+           
+            File folder = new File("."); 
+            String[] files = folder.list();
 
-        MessageLogger.logMessage(clientAddress + ": " + message);
+            if (files != null && files.length > 0) {
+                return "Skedaret ne Server: " + Arrays.toString(files);
+            } else {
+                return "Serveri nuk ka asnje skedar per te treguar.";
+            }
+        }
 
-        if (message.equalsIgnoreCase("ping")) {
-            return "pong";
-        } 
-        else if (message.equalsIgnoreCase("time")) {
-            return new Date().toString();
-        }
-        else if (message.equalsIgnoreCase("hello")) {  
-            return "Pershendetje klient!";
-        }
-        else {
-            return "Mesazh i pranuar: " + message;
-        }
+        
+        return "ACK: Mesazhi u pranua, por nuk u kerka lista e skedareve.";
     }
 }

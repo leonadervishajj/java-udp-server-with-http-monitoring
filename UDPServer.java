@@ -1,62 +1,48 @@
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.util.HashSet;
-import java.util.Set;
+import java.net.*;
+import java.io.*;
 
 public class UDPServer {
-
-    private static final String SERVER_IP = "127.0.0.1";
-    private static final int PORT = 5000;
-    private static final int MAX_CLIENTS = 3;
-
-  
-    private static Set<String> clients = new HashSet<>();
+    private static final int PORT = 1234;
 
     public static void main(String[] args) {
-        try {
-            DatagramSocket socket = new DatagramSocket(PORT);
+        new Thread(new HttpServer()).start();
 
-            System.out.println("Serveri po dëgjon në portin: " + PORT);
+        try (DatagramSocket socket = new DatagramSocket(PORT)) {
+            System.out.println("UDP Serveri nisi ne portin " + PORT);
+            System.out.println(" Pika 6: Shkruaj 'LISTA' te klienti per te pare fajllat.");
+
+            byte[] buffer = new byte[2048];
 
             while (true) {
-                byte[] buffer = new byte[1024];
+                DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
+                socket.receive(receivePacket);
 
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-
-                socket.receive(packet);
-
-                String clientAddress = packet.getAddress().getHostAddress() + ":" + packet.getPort();
-
-                if (!clients.contains(clientAddress)) {
-
-                    
-                    if (clients.size() >= MAX_CLIENTS) {
-                        String response = "Serveri i mbingarkuar. Provo më vonë!";
-                        byte[] responseData = response.getBytes();
-
-                        DatagramPacket responsePacket = new DatagramPacket(
-                                responseData,
-                                responseData.length,
-                                packet.getAddress(),
-                                packet.getPort()
-                        );
-
-                        socket.send(responsePacket);
-                        System.out.println("Klienti u refuzua: " + clientAddress);
-                        continue;
-                    }
+            
+                InetAddress clientAddress = receivePacket.getAddress();
+                int clientPort = receivePacket.getPort();
+                String clientID = clientAddress.toString() + ":" + clientPort;
 
 
-                    clients.add(clientAddress);
-                    System.out.println("Klient i ri u lidh: " + clientAddress);
-                }
+                String message = new String(receivePacket.getData(), 0, receivePacket.getLength()).trim();
+                System.out.println("Mesazh nga [" + clientID + "]: " + message);
+                MessageLogger.log(clientID, message);
 
-               
-                String message = new String(packet.getData(), 0, packet.getLength());
-                System.out.println("Mesazh nga " + clientAddress + ": " + message);
+       
+                TimeoutManager.updateActivity(clientID);
+                TimeoutManager.checkTimeouts();
+                String responseMessage = ClientHandler.handleRequest(message);
+
+                
+                byte[] sendData = responseMessage.getBytes();
+                DatagramPacket sendPacket = new DatagramPacket(
+                    sendData, sendData.length, 
+                    clientAddress, 
+                    clientPort
+                );
+                socket.send(sendPacket);
             }
-
         } catch (Exception e) {
+            System.err.println(" Gabim ne UDPServer: " + e.getMessage());
             e.printStackTrace();
         }
     }
