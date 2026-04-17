@@ -1,49 +1,31 @@
 import java.net.*;
-import java.io.*;
 
 public class UDPServer {
-    private static final int PORT = 1234;
-
     public static void main(String[] args) {
-        new Thread(new HttpServer()).start();
-
-        try (DatagramSocket socket = new DatagramSocket(PORT)) {
-            System.out.println("UDP Serveri nisi ne portin " + PORT);
-            System.out.println(" Pika 6: Shkruaj 'LISTA' te klienti per te pare fajllat.");
-
-            byte[] buffer = new byte[2048];
-
+        new Thread(new HttpServer()).start(); 
+        try (DatagramSocket socket = new DatagramSocket(1234)) {
+            System.out.println("Serveri u nis ne portin 1234...");
+            byte[] buf = new byte[8192];
             while (true) {
-                DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
-                socket.receive(receivePacket);
+                DatagramPacket p = new DatagramPacket(buf, buf.length);
+                socket.receive(p);
+                String msg = new String(p.getData(), 0, p.getLength()).trim();
+                String id = p.getAddress() + ":" + p.getPort();
 
-            
-                InetAddress clientAddress = receivePacket.getAddress();
-                int clientPort = receivePacket.getPort();
-                String clientID = clientAddress.toString() + ":" + clientPort;
+                if (msg.contains("[ADMIN]")) {
+                    System.out.println("Prioritet: Kerkesa nga Admin u procesua.");
+                } else {
+                    Thread.sleep(500); 
+                    System.out.println("User: Kerkesa u procesua me vonese.");
+                }
 
+                TimeoutManager.updateActivity(id);
+                String response = ClientHandler.handleRequest(msg);
+                MessageLogger.log(id, msg);
 
-                String message = new String(receivePacket.getData(), 0, receivePacket.getLength()).trim();
-                System.out.println("Mesazh nga [" + clientID + "]: " + message);
-                MessageLogger.log(clientID, message);
-
-       
-                TimeoutManager.updateActivity(clientID);
-                TimeoutManager.checkTimeouts();
-                String responseMessage = ClientHandler.handleRequest(message);
-
-                
-                byte[] sendData = responseMessage.getBytes();
-                DatagramPacket sendPacket = new DatagramPacket(
-                    sendData, sendData.length, 
-                    clientAddress, 
-                    clientPort
-                );
-                socket.send(sendPacket);
+                byte[] data = response.getBytes();
+                socket.send(new DatagramPacket(data, data.length, p.getAddress(), p.getPort()));
             }
-        } catch (Exception e) {
-            System.err.println(" Gabim ne UDPServer: " + e.getMessage());
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 }
