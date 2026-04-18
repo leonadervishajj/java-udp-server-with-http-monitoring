@@ -15,7 +15,7 @@ Ky projekt përfaqëson një sistem të avancuar të komunikimit në rrjet, i nd
 
 ## 🏗️ Arkitektura e Sistemit
 
-Sistemi bazohet në dy motorë (engines) që operojnë paralelisht, duke shfrytëzuar fuqinë e **Multithreading**:
+Sistemi bazohet në dy motorë - engines që operojnë paralelisht, duke shfrytëzuar fuqinë e **Multithreading**:
 
 ### 1. UDP Engine (Porti 1234)
 Ky është kanali kryesor i komunikimit. Përdor `DatagramSocket` për të pranuar kërkesat nga klientët. Përparësia e UDP në këtë projekt është shpejtësia dhe efikasiteti në rrjete lokale.
